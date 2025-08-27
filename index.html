@@ -87,6 +87,14 @@
     @media (min-width: 640px) { time#clock { font-size: 10vw; } }
     @media (min-width: 1024px) { time#clock { font-size: 8vw; } }
 
+    #date {
+      margin-top: 0.75rem;
+      text-align: center;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.8);
+      font-weight: 400;
+    }
+
     footer.note {
       margin-top: 1.5rem;
       text-align: center;
@@ -105,27 +113,33 @@
 
   <main class="stage" aria-live="polite">
     <div class="card">
-      <div class="pad" style="display:flex; align-items:center; justify-content:center;">
+      <div class="pad" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
         <time id="clock" datetime=""></time>
+        <div id="date"></div>
       </div>
     </div>
-    <footer class="note">Yerel saat — sistem saatine göre anlık güncellenir.</footer>
+    <footer class="note">Yerel saat ve tarih — sistem saatine göre anlık güncellenir.</footer>
   </main>
 
   <button class="sr-only">Odağı temizle</button>
 
   <script>
     (function(){
-      const el = document.getElementById('clock');
+      const elClock = document.getElementById('clock');
+      const elDate = document.getElementById('date');
       const locale = navigator.language || undefined;
-      const fmt = new Intl.DateTimeFormat(locale, {
+      const fmtTime = new Intl.DateTimeFormat(locale, {
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+      const fmtDate = new Intl.DateTimeFormat(locale, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
       });
 
       function tick(){
         const now = new Date();
-        el.textContent = fmt.format(now);
-        el.setAttribute('datetime', now.toISOString());
+        elClock.textContent = fmtTime.format(now);
+        elClock.setAttribute('datetime', now.toISOString());
+        elDate.textContent = fmtDate.format(now);
       }
 
       tick(); // ilk çizim
