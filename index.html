@@ -1,38 +1,136 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lokal Saat</title>
   <style>
+    :root {
+      --bg-grad: radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.2), rgba(255,255,255,0) 60%),
+                  conic-gradient(from 180deg at 50% 120%, rgba(0,0,0,0.1), rgba(0,0,0,0) 30%),
+                  linear-gradient(120deg, #0f172a, #0b1026);
+      --card-bg: rgba(255,255,255,0.05);
+      --card-bd: rgba(255,255,255,0.10);
+      --text-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
-      justify-content: center;
       align-items: center;
-      background: linear-gradient(120deg,#0f172a,#0b1026);
-      color: white;
-      font-family: sans-serif;
+      justify-content: center;
+      background: var(--bg-grad);
+      color: #fff;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      overflow: hidden;
     }
-    .clock {
-      font-size: 8vw;
-      font-weight: bold;
-      text-shadow: 0 8px 30px rgba(0,0,0,0.35);
+
+    .stage {
+      position: relative;
+      width: 100%;
+      max-width: 72rem; /* ~max-w-4xl */
+      margin: 0 1rem;
     }
+
+    /* İnce grid arkaplan */
+    .grid-overlay::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .20;
+      background-image: radial-gradient(#ffffff33 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Parıltı */
+    .glow {
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      width: 80vmin;
+      height: 80vmin;
+      border-radius: 50%;
+      opacity: .30;
+      filter: blur(100px);
+      background: radial-gradient(circle at 50% 50%, #60a5fa, #34d399, transparent 60%);
+      z-index: -1;
+    }
+
+    .card {
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-bd);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      border-radius: 24px; /* ~rounded-3xl */
+    }
+
+    .pad { padding: 2.5rem; }
+    @media (min-width: 640px) { .pad { padding: 3.5rem; } }
+    @media (min-width: 1024px) { .pad { padding: 4rem; } }
+
+    time#clock {
+      display: block;
+      text-align: center;
+      user-select: none;
+      font-weight: 600;
+      letter-spacing: -0.02em; /* tracking-tight */
+      font-variant-numeric: tabular-nums; /* tabular alignment */
+      text-shadow: var(--text-shadow);
+      line-height: 1;
+      font-size: 14vw; /* mobile */
+    }
+    @media (min-width: 640px) { time#clock { font-size: 10vw; } }
+    @media (min-width: 1024px) { time#clock { font-size: 8vw; } }
+
+    footer.note {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* Odak test butonu (erişilebilirlik) */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .sr-only:focus { position: fixed; bottom: 1rem; left: 1rem; width: auto; height: auto; padding: .5rem .75rem; border-radius: .5rem; background: rgba(255,255,255,0.1); color: #fff; clip: auto; white-space: normal; }
   </style>
 </head>
 <body>
-  <div class="clock" id="clock"></div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+  <div class="glow" aria-hidden="true"></div>
+
+  <main class="stage" aria-live="polite">
+    <div class="card">
+      <div class="pad" style="display:flex; align-items:center; justify-content:center;">
+        <time id="clock" datetime=""></time>
+      </div>
+    </div>
+    <footer class="note">Yerel saat — sistem saatine göre anlık güncellenir.</footer>
+  </main>
+
+  <button class="sr-only">Odağı temizle</button>
 
   <script>
-    function updateClock() {
-      const now = new Date();
-      const time = now.toLocaleTimeString("tr-TR", { hour12: false });
-      document.getElementById("clock").textContent = time;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    (function(){
+      const el = document.getElementById('clock');
+      const locale = navigator.language || undefined;
+      const fmt = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+
+      function tick(){
+        const now = new Date();
+        el.textContent = fmt.format(now);
+        el.setAttribute('datetime', now.toISOString());
+      }
+
+      tick(); // ilk çizim
+      setInterval(tick, 1000); // saniyede bir güncelle
+    })();
   </script>
 </body>
 </html>
