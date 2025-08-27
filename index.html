@@ -1,71 +1,38 @@
-import React, { useEffect, useMemo, useState } from "react";
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lokal Saat</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(120deg,#0f172a,#0b1026);
+      color: white;
+      font-family: sans-serif;
+    }
+    .clock {
+      font-size: 8vw;
+      font-weight: bold;
+      text-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="clock" id="clock"></div>
 
-// Tek sayfalık minimal saat. Yalnızca yerel saati gösterir.
-// Tailwind ile modern bir arayüz; erişilebilirlik ve yüksek kontrast gözetildi.
-
-function useLocalTime(tickMs: number = 1000) {
-  const [now, setNow] = useState<Date>(() => new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), tickMs);
-    return () => clearInterval(id);
-  }, [tickMs]);
-
-  return now;
-}
-
-function useTimeFormatter() {
-  // Kullanıcının tarayıcı diline göre saat biçimlendirici
-  const locale = typeof navigator !== "undefined" ? navigator.language : undefined;
-  return useMemo(() =>
-    new Intl.DateTimeFormat(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false, // 24 saat formatı — netlik için
-    }), [locale]);
-}
-
-export default function App() {
-  const now = useLocalTime(1000);
-  const fmt = useTimeFormatter();
-  const time = fmt.format(now);
-
-  return (
-    <div className="min-h-screen w-full overflow-hidden relative flex items-center justify-center bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(255,255,255,0.2),rgba(255,255,255,0)_60%),conic-gradient(from_180deg_at_50%_120%,rgba(0,0,0,0.1),rgba(0,0,0,0)_30%),linear-gradient(120deg,#0f172a,#0b1026)] text-white">
-      {/* İnce grid arkaplan */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-20 [background:radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:24px_24px]" />
-
-      {/* Parıltı */}
-      <div aria-hidden className="absolute -z-10 w-[80vmin] h-[80vmin] rounded-full blur-3xl opacity-30" style={{
-        background: "radial-gradient(circle at 50% 50%, #60a5fa, #34d399, transparent 60%)",
-      }} />
-
-      <main
-        className="relative mx-4 w-full max-w-4xl"
-        aria-live="polite"
-      >
-        <div className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl rounded-3xl">
-          <div className="p-10 sm:p-14 lg:p-16 flex items-center justify-center">
-            <time
-              dateTime={now.toISOString()}
-              className="select-none font-semibold tracking-tight tabular-nums [font-variant-numeric:tabular-nums] text-[14vw] sm:text-[10vw] lg:text-[8vw] leading-none drop-shadow-xl"
-              style={{
-                textShadow: "0 8px 30px rgba(0,0,0,0.35)",
-              }}
-            >
-              {time}
-            </time>
-          </div>
-        </div>
-
-        <footer className="mt-6 text-center text-xs text-white/60">
-          Yerel saat — sistem saatine göre anlık güncellenir.
-        </footer>
-      </main>
-
-      {/* Odak halkaları için görünmez buton: Klavye navigasyonu testlerinde yardımcı olur */}
-      <button className="sr-only focus:not-sr-only focus:fixed focus:bottom-4 focus:left-4 focus:px-3 focus:py-2 focus:rounded-lg focus:bg-white/10 focus:text-white">Odağı temizle</button>
-    </div>
-  );
-}
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString("tr-TR", { hour12: false });
+      document.getElementById("clock").textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>
