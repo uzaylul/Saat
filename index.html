@@ -1,267 +1,71 @@
-<!doctype html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Modern Saat</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800;900&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#000000; /* Siyah arka plan */
-      --fg:#ffffff; /* Beyaz yazı */
-      --muted: rgba(255,255,255,0.55);
-      --accent: rgba(255,255,255,0.08);
-    }
-    html,body{height:100%;}
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:32px;
-    }
+import React, { useEffect, useMemo, useState } from "react";
 
-    .card{
-      width:100%;
-      max-width:980px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
-      border-radius:20px;
-      padding:48px;
-      display:grid;
-      grid-template-columns: 1fr 320px;
-      gap:32px;
-      align-items:center;
-      box-shadow: 0 6px 30px rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.04);
-    }
+// Tek sayfalık minimal saat. Yalnızca yerel saati gösterir.
+// Tailwind ile modern bir arayüz; erişilebilirlik ve yüksek kontrast gözetildi.
 
-    .clock {
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
+function useLocalTime(tickMs: number = 1000) {
+  const [now, setNow] = useState<Date>(() => new Date());
 
-    .time{
-      font-weight:900; /* Kalın yazı */
-      letter-spacing: -1px;
-      font-size: clamp(48px, 12vw, 112px);
-      line-height:1;
-    }
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), tickMs);
+    return () => clearInterval(id);
+  }, [tickMs]);
 
-    .ampm{
-      font-weight:700;
-      font-size:clamp(12px,2.6vw,20px);
-      color:var(--muted);
-      margin-top:8px;
-    }
+  return now;
+}
 
-    .date{
-      font-weight:600;
-      color:var(--muted);
-      font-size:16px;
-      margin-top:6px;
-    }
+function useTimeFormatter() {
+  // Kullanıcının tarayıcı diline göre saat biçimlendirici
+  const locale = typeof navigator !== "undefined" ? navigator.language : undefined;
+  return useMemo(() =>
+    new Intl.DateTimeFormat(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false, // 24 saat formatı — netlik için
+    }), [locale]);
+}
 
-    .meta{
-      display:flex;
-      flex-direction:column;
-      gap:16px;
-      align-items:stretch;
-    }
+export default function App() {
+  const now = useLocalTime(1000);
+  const fmt = useTimeFormatter();
+  const time = fmt.format(now);
 
-    .panel{
-      background: rgba(255,255,255,0.02);
-      border-radius:12px;
-      padding:18px;
-      border: 1px solid rgba(255,255,255,0.03);
-    }
+  return (
+    <div className="min-h-screen w-full overflow-hidden relative flex items-center justify-center bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(255,255,255,0.2),rgba(255,255,255,0)_60%),conic-gradient(from_180deg_at_50%_120%,rgba(0,0,0,0.1),rgba(0,0,0,0)_30%),linear-gradient(120deg,#0f172a,#0b1026)] text-white">
+      {/* İnce grid arkaplan */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-20 [background:radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:24px_24px]" />
 
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:600}
-    select,input{width:100%;padding:12px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--fg);font-weight:700}
+      {/* Parıltı */}
+      <div aria-hidden className="absolute -z-10 w-[80vmin] h-[80vmin] rounded-full blur-3xl opacity-30" style={{
+        background: "radial-gradient(circle at 50% 50%, #60a5fa, #34d399, transparent 60%)",
+      }} />
 
-    .small{font-size:13px;color:var(--muted)}
-
-    .analog{
-      width:100%;
-      height:200px;
-      border-radius:12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-      border:1px solid rgba(255,255,255,0.03);
-    }
-
-    /* Analog clock face */
-    .face{
-      width:160px;height:160px;border-radius:50%;position:relative;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.015), transparent 30%), transparent;
-      box-shadow: inset 0 2px 8px rgba(255,255,255,0.02);
-      display:flex;align-items:center;justify-content:center;
-    }
-    .hand{position:absolute;transform-origin:50% 85%;background:var(--fg);}
-    .hour{width:6px;height:44px;border-radius:6px;opacity:0.95}
-    .minute{width:4px;height:60px;border-radius:4px;opacity:0.9}
-    .second{width:2px;height:72px;border-radius:2px;background:var(--fg);opacity:0.7}
-    .center-dot{width:8px;height:8px;border-radius:50%;background:var(--fg);position:absolute}
-
-    .foot{margin-top:18px;color:var(--muted);font-size:13px}
-
-    @media (max-width:920px){
-      .card{grid-template-columns:1fr; padding:28px}
-      .meta{order:2}
-      .analog{justify-content:flex-start}
-    }
-
-    @media (prefers-reduced-motion: reduce){
-      .second, .minute, .hour{transition:none}
-    }
-  </style>
-</head>
-<body>
-  <main class="card" role="main" aria-labelledby="title">
-    <section class="clock">
-      <h1 id="title" class="time" aria-live="polite">--:--:--</h1>
-      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
-        <div class="ampm" id="ampm">--</div>
-        <div class="date" id="date">Yükleniyor...</div>
-      </div>
-
-      <div class="foot">Yerel saat. Saat formatını değiştirmek için tercihlerden seçim yapabilirsiniz.</div>
-    </section>
-
-    <aside class="meta">
-      <div class="panel">
-        <label for="format">Saat Formatı</label>
-        <select id="format" aria-label="Saat Formatı">
-          <option value="auto">Otomatik (Kullanıcının yerel tercihi)</option>
-          <option value="24">24 saat</option>
-          <option value="12">12 saat (AM/PM)</option>
-        </select>
-      </div>
-
-      <div class="panel analog" aria-hidden="false">
-        <div class="face" id="face" role="img" aria-label="Analog saat">
-          <div class="hand hour" id="h"></div>
-          <div class="hand minute" id="m"></div>
-          <div class="hand second" id="s"></div>
-          <div class="center-dot"></div>
+      <main
+        className="relative mx-4 w-full max-w-4xl"
+        aria-live="polite"
+      >
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl rounded-3xl">
+          <div className="p-10 sm:p-14 lg:p-16 flex items-center justify-center">
+            <time
+              dateTime={now.toISOString()}
+              className="select-none font-semibold tracking-tight tabular-nums [font-variant-numeric:tabular-nums] text-[14vw] sm:text-[10vw] lg:text-[8vw] leading-none drop-shadow-xl"
+              style={{
+                textShadow: "0 8px 30px rgba(0,0,0,0.35)",
+              }}
+            >
+              {time}
+            </time>
+          </div>
         </div>
-      </div>
 
-      <div class="panel">
-        <label for="timezone">Saat Dilimi</label>
-        <select id="timezone" aria-label="Saat Dilimi">
-          <option value="local">Yerel (Tarayıcı)</option>
-          <option value="UTC">UTC</option>
-          <option value="Europe/Istanbul">Europe/Istanbul</option>
-          <option value="America/New_York">America/New_York</option>
-          <option value="Asia/Tokyo">Asia/Tokyo</option>
-          <option value="Europe/London">Europe/London</option>
-        </select>
-        <div class="small" style="margin-top:10px">Seçim yapmazsanız tarayıcı saat diliminiz kullanılır.</div>
-      </div>
-    </aside>
-  </main>
+        <footer className="mt-6 text-center text-xs text-white/60">
+          Yerel saat — sistem saatine göre anlık güncellenir.
+        </footer>
+      </main>
 
-  <script>
-    const timeEl = document.getElementById('title');
-    const dateEl = document.getElementById('date');
-    const ampmEl = document.getElementById('ampm');
-    const tzSel = document.getElementById('timezone');
-    const formatSel = document.getElementById('format');
-
-    // Hands for analog clock
-    const hHand = document.getElementById('h');
-    const mHand = document.getElementById('m');
-    const sHand = document.getElementById('s');
-
-    // Populate timezone default
-    function detectDefaultTZ(){
-      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' } catch (e) { return 'UTC' }
-    }
-    tzSel.value = 'local';
-
-    function getNow(tz){
-      const now = new Date();
-      if(!tz || tz === 'local') return now;
-      // Create parts via Intl to get components in chosen timezone
-      const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: tz,
-        hour12: false,
-        year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'
-      }).formatToParts(now).reduce((acc,p)=>{acc[p.type]=p.value;return acc},{})
-      const year = +parts.year, month = +parts.month-1, day = +parts.day, hour=+parts.hour, minute=+parts.minute, second=+parts.second;
-      return new Date(Date.UTC(year,month,day,hour,minute,second));
-    }
-
-    function pad(n){return String(n).padStart(2,'0')}
-
-    function update(){
-      const tz = tzSel.value;
-      const now = getNow(tz);
-
-      // Format selection
-      let use12 = false;
-      if(formatSel.value==='12') use12 = true;
-      else if(formatSel.value==='24') use12 = false;
-      else { // auto
-        try { use12 = new Intl.DateTimeFormat(undefined, {hour:'numeric'}).resolvedOptions().hour12 } catch(e){ use12 = false }
-      }
-
-      let hours = now.getHours();
-      const minutes = now.getMinutes();
-      const seconds = now.getSeconds();
-
-      let ampm = '';
-      if(use12){ ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12 || 12 }
-
-      timeEl.textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-      ampmEl.textContent = use12 ? ampm : '';
-
-      const dateOptions = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
-      dateEl.textContent = new Intl.DateTimeFormat('tr-TR', dateOptions).format(now) + (tz==='local' ? '' : ` — ${tz}`);
-
-      // Analog rotation
-      const ms = now.getMilliseconds ? now.getMilliseconds() : 0;
-      const secAngle = (seconds + ms/1000) * 6; // 360/60
-      const minAngle = (minutes + seconds/60) * 6;
-      const hourAngle = ((now.getHours()%12) + minutes/60) * 30; // 360/12
-
-      sHand.style.transform = `rotate(${secAngle}deg)`;
-      mHand.style.transform = `rotate(${minAngle}deg)`;
-      hHand.style.transform = `rotate(${hourAngle}deg)`;
-    }
-
-    // Smooth animation using requestAnimationFrame
-    function animate(){
-      update();
-      requestAnimationFrame(animate);
-    }
-
-    // Initialize
-    formatSel.addEventListener('change', ()=>update());
-    tzSel.addEventListener('change', ()=>update());
-
-    // Fill timezone dropdown with user's tz if 'local' selected — no external queries
-    (function setDefaultTZLabel(){
-      const local = detectDefaultTZ();
-      const opt = document.createElement('option');
-      opt.value = local;
-      opt.textContent = `${local} (Tarayıcı)`;
-      tzSel.insertBefore(opt, tzSel.children[1]);
-      tzSel.value = 'local';
-    })();
-
-    // Start
-    requestAnimationFrame(animate);
-  </script>
-</body>
-</html>
+      {/* Odak halkaları için görünmez buton: Klavye navigasyonu testlerinde yardımcı olur */}
+      <button className="sr-only focus:not-sr-only focus:fixed focus:bottom-4 focus:left-4 focus:px-3 focus:py-2 focus:rounded-lg focus:bg-white/10 focus:text-white">Odağı temizle</button>
+    </div>
+  );
+}
